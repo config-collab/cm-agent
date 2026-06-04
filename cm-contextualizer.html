@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>CM Contextualizer — Build your Knowledge Base</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Geist:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#09090b;--bg2:#111113;--bg3:#18181b;--bg4:#1f1f23;
+  --border:#27272a;--border2:#3f3f46;
+  --cyan:#22d3ee;--cdim:#0891b2;--cglow:#22d3ee18;
+  --violet:#a78bfa;--green:#4ade80;--red:#f87171;--amber:#fbbf24;
+  --tx:#fafafa;--tx2:#a1a1aa;--tx3:#52525b;--tx4:#3f3f46;
+  --mono:'JetBrains Mono',monospace;--sans:'Geist',system-ui,sans-serif;--r:6px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--tx);font-family:var(--sans);font-size:14px;display:flex;flex-direction:column;height:100vh}
+
+/* TOP BAR */
+.top{height:52px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:16px;flex-shrink:0}
+.tlogo{display:flex;align-items:center;gap:10px}
+.tmark{width:32px;height:32px;border-radius:7px;background:linear-gradient(135deg,var(--cdim),var(--violet));display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:11px;font-weight:700;color:#fff}
+.tname{font-size:15px;font-weight:600;color:var(--tx)}
+.tsub{font-size:11px;color:var(--tx3);margin-top:1px;font-family:var(--mono)}
+.tright{margin-left:auto;display:flex;align-items:center;gap:10px}
+.tstep{font-family:var(--mono);font-size:11px;color:var(--tx3)}
+.tstep span{color:var(--cyan);font-weight:600}
+
+/* LAYOUT */
+.body{display:flex;flex:1;overflow:hidden}
+
+/* SIDEBAR — steps */
+.side{width:220px;background:var(--bg2);border-right:1px solid var(--border);padding:20px 12px;display:flex;flex-direction:column;gap:4px;flex-shrink:0}
+.step-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--r);cursor:pointer;transition:all .12s;border:1px solid transparent}
+.step-item.active{background:var(--cglow);border-color:var(--cdim)}
+.step-item.done{opacity:.7}
+.step-num{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:10px;font-weight:700;background:var(--bg4);border:1px solid var(--border2);color:var(--tx3);flex-shrink:0}
+.step-item.active .step-num{background:var(--cyan);border-color:var(--cyan);color:var(--bg)}
+.step-item.done .step-num{background:var(--green);border-color:var(--green);color:var(--bg)}
+.step-label{font-size:12px;font-weight:500;color:var(--tx2)}
+.step-item.active .step-label{color:var(--tx)}
+.step-desc{font-size:10px;color:var(--tx4);margin-top:1px;font-family:var(--mono)}
+
+.side-privacy{margin-top:auto;background:#22d3ee0d;border:1px solid #22d3ee22;border-radius:var(--r);padding:10px;font-size:11px;color:var(--tx3);line-height:1.6}
+.side-privacy strong{color:var(--cyan);font-weight:600;display:block;margin-bottom:3px}
+
+/* MAIN */
+.main{flex:1;overflow:hidden;display:flex;flex-direction:column}
+.panel{display:none;flex:1;overflow-y:auto;padding:28px 32px}
+.panel.active{display:flex;flex-direction:column;gap:20px}
+.panel::-webkit-scrollbar{width:5px}
+.panel::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+.ph{font-size:20px;font-weight:700;margin-bottom:4px}
+.ps{font-size:13px;color:var(--tx2);line-height:1.6;margin-bottom:4px}
+
+/* CARDS */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:20px}
+.card-title{font-size:13px;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.badge{font-family:var(--mono);font-size:9px;padding:2px 7px;border-radius:10px;text-transform:uppercase;letter-spacing:.05em}
+.bapi{background:#22d3ee22;border:1px solid #22d3ee44;color:var(--cyan)}
+.blocal{background:#fbbf2422;border:1px solid #fbbf2444;color:var(--amber)}
+.bwarn{background:#f8714916;border:1px solid #f8714933;color:var(--red)}
+.bgreen{background:#4ade8016;border:1px solid #4ade8033;color:var(--green)}
+
+/* FORMS */
+.frow{margin-bottom:14px}
+.flabel{display:block;font-size:10px;font-weight:600;color:var(--tx3);margin-bottom:5px;text-transform:uppercase;letter-spacing:.07em}
+.finput,.fselect{width:100%;background:var(--bg3);border:1px solid var(--border2);color:var(--tx);font-family:var(--mono);font-size:12px;padding:9px 11px;border-radius:var(--r);outline:none;transition:border-color .15s}
+.finput:focus,.fselect:focus{border-color:var(--cyan)}
+.finput::placeholder{color:var(--tx4)}
+.fhint{font-family:var(--mono);font-size:10px;color:var(--tx4);margin-top:4px;line-height:1.5}
+.fbtn{background:var(--cyan);border:none;color:var(--bg);font-family:var(--sans);font-size:13px;font-weight:600;padding:9px 20px;border-radius:var(--r);cursor:pointer;transition:all .15s}
+.fbtn:hover{background:#38bdf8}
+.fbtn:disabled{background:var(--border2);color:var(--tx3);cursor:not-allowed}
+.fbtn-ghost{background:none;border:1px solid var(--border2);color:var(--tx2);font-family:var(--sans);font-size:12px;padding:8px 16px;border-radius:var(--r);cursor:pointer;transition:all .15s}
+.fbtn-ghost:hover{border-color:var(--border);color:var(--tx)}
+.frow-inline{display:flex;gap:10px;align-items:flex-end}
+.frow-inline .finput{flex:1}
+
+/* PROVIDER GRID */
+.pgrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px}
+.pcard{border:1px solid var(--border2);border-radius:var(--r);padding:14px 12px;cursor:pointer;text-align:center;transition:all .15s;background:var(--bg3)}
+.pcard:hover{border-color:var(--cdim);background:var(--cglow)}
+.pcard.sel{border-color:var(--cyan);background:var(--cglow)}
+.pcard .pic{font-size:20px;margin-bottom:5px}
+.pcard .pn{font-size:12px;font-weight:600;color:var(--tx)}
+.pcard .pd{font-size:10px;color:var(--tx3);font-family:var(--mono);margin-top:2px}
+
+/* DROPZONE */
+.dropzone{border:2px dashed var(--border2);border-radius:var(--r);padding:28px;text-align:center;transition:all .15s;cursor:pointer}
+.dropzone:hover,.dropzone.drag{border-color:var(--cyan);background:var(--cglow)}
+.dz-icon{font-size:32px;margin-bottom:10px}
+.dz-title{font-size:13px;font-weight:600;color:var(--tx2);margin-bottom:4px}
+.dz-sub{font-size:11px;color:var(--tx3);font-family:var(--mono)}
+.dz-btns{display:flex;gap:8px;justify-content:center;margin:12px 0 8px}
+.dzbtn{background:var(--bg4);border:1px solid var(--border2);color:var(--tx2);font-family:var(--sans);font-size:12px;padding:6px 16px;border-radius:var(--r);cursor:pointer;transition:all .15s}
+.dzbtn:hover{border-color:var(--cyan);color:var(--cyan)}
+
+/* FILE QUEUE TABLE */
+.queue-wrap{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+.queue-head{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--bg4)}
+.queue-head-title{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--tx2)}
+.queue-list{max-height:200px;overflow-y:auto}
+.queue-list::-webkit-scrollbar{width:3px}
+.queue-list::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.qi{display:grid;grid-template-columns:20px 1fr 70px 80px;gap:8px;align-items:center;padding:6px 14px;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:11px}
+.qi:last-child{border-bottom:none}
+.qi-name{color:var(--tx2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.qi-size{color:var(--tx4);text-align:right}
+.qi-status{text-align:right}
+.s-wait{color:var(--tx4)}.s-busy{color:var(--amber)}.s-ok{color:var(--green)}.s-err{color:var(--red)}.s-skip{color:var(--tx4);text-decoration:line-through}
+
+/* PROGRESS */
+.prog-wrap{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px}
+.prog-label{font-family:var(--mono);font-size:11px;color:var(--tx2);margin-bottom:8px}
+.prog-bar-bg{height:6px;background:var(--border);border-radius:3px;overflow:hidden;margin-bottom:8px}
+.prog-bar{height:100%;background:var(--cyan);width:0%;transition:width .3s;border-radius:3px}
+.prog-stats{display:flex;gap:16px;font-family:var(--mono);font-size:10px;color:var(--tx3)}
+.prog-stat-ok{color:var(--green)}.prog-stat-err{color:var(--red)}.prog-stat-skip{color:var(--tx4)}
+
+/* RESULTS TABLE */
+.results-table{width:100%;border-collapse:collapse;font-size:12px}
+.results-table th{background:var(--bg4);border:1px solid var(--border2);padding:7px 10px;text-align:left;color:var(--tx3);font-weight:600;font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.05em}
+.results-table td{border:1px solid var(--border);padding:7px 10px;color:var(--tx2);vertical-align:top}
+.results-table tr:nth-child(even) td{background:var(--bg3)}
+.results-table td.doc-title{color:var(--tx);font-weight:500;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.results-table td.doc-type{font-family:var(--mono);font-size:10px;color:var(--cdim)}
+.tag-chip{display:inline-block;background:var(--bg4);border:1px solid var(--border);color:var(--tx3);font-family:var(--mono);font-size:9px;padding:1px 5px;border-radius:3px;margin:1px;text-transform:uppercase}
+.dec-badge{display:inline-block;background:#4ade8016;border:1px solid #4ade8033;color:var(--green);font-family:var(--mono);font-size:9px;padding:1px 6px;border-radius:3px}
+.no-dec{color:var(--tx4);font-size:11px}
+.edit-btn{background:none;border:1px solid var(--border);color:var(--tx3);font-family:var(--mono);font-size:10px;padding:2px 8px;border-radius:3px;cursor:pointer;transition:all .12s}
+.edit-btn:hover{border-color:var(--cdim);color:var(--cyan)}
+
+/* EXPORT CARD */
+.export-card{background:linear-gradient(135deg,#0891b215,#7c3aed15);border:1px solid #22d3ee33;border-radius:8px;padding:24px;text-align:center}
+.export-icon{font-size:40px;margin-bottom:12px}
+.export-title{font-size:18px;font-weight:700;margin-bottom:6px}
+.export-sub{font-size:13px;color:var(--tx2);margin-bottom:20px;line-height:1.6}
+.export-stats{display:flex;gap:20px;justify-content:center;margin-bottom:20px}
+.estat{text-align:center}
+.estat-num{font-size:28px;font-weight:700;color:var(--cyan);font-family:var(--mono)}
+.estat-label{font-size:11px;color:var(--tx3);margin-top:2px}
+
+/* MODAL */
+.moverlay{position:fixed;inset:0;background:rgba(0,0,0,.8);display:none;align-items:center;justify-content:center;z-index:100;backdrop-filter:blur(3px);padding:20px}
+.moverlay.open{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:8px;padding:24px;width:560px;max-width:100%;max-height:85vh;overflow-y:auto}
+.modal::-webkit-scrollbar{width:4px}
+.modal::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.mtitle{font-size:15px;font-weight:700;margin-bottom:16px}
+.mactions{display:flex;gap:8px;justify-content:flex-end;margin-top:18px}
+
+/* STATUS LINE */
+.stline{display:flex;align-items:center;gap:6px;margin-top:8px;font-family:var(--mono);font-size:10px;color:var(--tx3)}
+.sdot{width:6px;height:6px;border-radius:50%;background:var(--tx4)}
+.sdot.ok{background:var(--green);box-shadow:0 0 5px var(--green)}.sdot.er{background:var(--red)}
+
+/* BOTTOM NAV */
+.bottom-nav{padding:14px 32px;border-top:1px solid var(--border);background:var(--bg2);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.nav-info{font-family:var(--mono);font-size:11px;color:var(--tx3)}
+
+/* TOAST */
+.toast{position:fixed;bottom:20px;right:20px;background:var(--green);color:var(--bg);font-family:var(--mono);font-size:12px;font-weight:600;padding:9px 16px;border-radius:var(--r);z-index:300}
+.toast.er{background:var(--red);color:#fff}
+
+/* MODEL REC */
+.model-rec{background:var(--bg4);border:1px solid var(--border);border-radius:var(--r);padding:10px 12px;margin:10px 0}
+.rec-row{display:flex;gap:12px;font-size:11px;padding:3px 0}
+.rec-label{font-family:var(--mono);color:var(--tx3);flex-shrink:0;min-width:170px}
+.rec-val{color:var(--tx2)}
+
+.hidden{display:none!important}
+select option{background:var(--bg2)}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="tlogo">
+    <div class="tmark">CX</div>
+    <div>
+      <div class="tname">CM Contextualizer</div>
+      <div class="tsub">Build your organisation's knowledge base</div>
+    </div>
+  </div>
+  <div class="tright">
+    <span class="tstep">Step <span id="step-label">1</span> of 4</span>
+  </div>
+</header>
+
+<div class="body">
+  <!-- SIDEBAR STEPS -->
+  <aside class="side">
+    <div class="step-item active" id="nav-1" onclick="goStep(1)">
+      <div class="step-num" id="sn-1">1</div>
+      <div><div class="step-label">LLM Setup</div><div class="step-desc">Provider &amp; privacy</div></div>
+    </div>
+    <div class="step-item" id="nav-2" onclick="goStep(2)">
+      <div class="step-num" id="sn-2">2</div>
+      <div><div class="step-label">Load Files</div><div class="step-desc">Folder or files</div></div>
+    </div>
+    <div class="step-item" id="nav-3" onclick="goStep(3)">
+      <div class="step-num" id="sn-3">3</div>
+      <div><div class="step-label">Process</div><div class="step-desc">Extract &amp; enrich</div></div>
+    </div>
+    <div class="step-item" id="nav-4" onclick="goStep(4)">
+      <div class="step-num" id="sn-4">4</div>
+      <div><div class="step-label">Export</div><div class="step-desc">Download cm-kb.json</div></div>
+    </div>
+
+    <div class="side-privacy">
+      <strong>&#x1F512; Privacy first</strong>
+      Documents are processed by your chosen LLM. Use Ollama for sensitive data — nothing leaves your machine.
+    </div>
+  </aside>
+
+  <!-- MAIN PANELS -->
+  <div class="main">
+
+    <!-- STEP 1: LLM SETUP -->
+    <div class="panel active" id="panel-1">
+      <div>
+        <div class="ph">LLM Configuration</div>
+        <div class="ps">Choose your AI provider. For sensitive or regulated CM data, use Ollama — it runs entirely on your machine.</div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">&#x1F512; Privacy Notice</div>
+        <div style="font-size:12px;color:var(--tx2);line-height:1.7">
+          The Contextualizer uses the LLM to <strong>extract decision provenance</strong> from your documents — who decided what, why, what alternatives were rejected. This means your document content is sent to the LLM provider you choose.<br/><br/>
+          <strong style="color:var(--green)">Ollama (local):</strong> Runs on your machine. Nothing leaves your network. Recommended for defense, aerospace, nuclear, or any confidential IP.<br/>
+          <strong style="color:var(--amber)">Claude / OpenAI:</strong> Data is sent to their servers. Review their data processing policies before use.
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Select Provider</div>
+        <div class="pgrid">
+          <div class="pcard" id="pc-ollama" onclick="selProv('ollama')">
+            <div class="pic">&#x1F999;</div>
+            <div class="pn">Ollama</div>
+            <div class="pd">Local &#xB7; 100% Private</div>
+          </div>
+          <div class="pcard" id="pc-claude" onclick="selProv('claude')">
+            <div class="pic">&#x1F916;</div>
+            <div class="pn">Claude</div>
+            <div class="pd">Cloud &#xB7; Data leaves device</div>
+          </div>
+          <div class="pcard" id="pc-openai" onclick="selProv('openai')">
+            <div class="pic">&#x26A1;</div>
+            <div class="pn">OpenAI</div>
+            <div class="pd">Cloud &#xB7; Data leaves device</div>
+          </div>
+        </div>
+
+        <!-- Ollama fields -->
+        <div id="f-ollama" class="hidden">
+          <div class="frow">
+            <label class="flabel">Ollama URL</label>
+            <input class="finput" type="text" id="c-lurl" value="http://localhost:11434" placeholder="http://localhost:11434"/>
+            <div class="fhint">localhost for personal use &#x2014; LAN IP for shared team server</div>
+          </div>
+          <div class="frow">
+            <label class="flabel">Model</label>
+            <select class="fselect" id="c-lmodel-sel" onchange="document.getElementById('c-lmodel').value=this.value">
+              <option value="">&#x2014; pick a recommendation or type below &#x2014;</option>
+              <optgroup label="CM Chat (laptop-friendly)">
+                <option value="llama3.2">llama3.2 &#x2014; 4 GB, good general assistant</option>
+                <option value="mistral">mistral &#x2014; 4 GB, strong instruction following</option>
+                <option value="gemma3:4b">gemma3:4b &#x2014; 3 GB, fast and lightweight</option>
+              </optgroup>
+              <optgroup label="Recommended for Contextualizer (needs 8-10 GB RAM)">
+                <option value="phi4">phi4 &#x2014; 8 GB, excellent JSON output &#x2605; recommended</option>
+                <option value="qwen2.5:14b">qwen2.5:14b &#x2014; 9 GB, best document analysis &#x2605; recommended</option>
+                <option value="llama3.1:8b">llama3.1:8b &#x2014; 5 GB, good balance</option>
+              </optgroup>
+              <optgroup label="Best Quality (GPU server)">
+                <option value="qwen2.5:32b">qwen2.5:32b &#x2014; 20 GB, near-cloud quality</option>
+                <option value="llama3.3:70b">llama3.3:70b &#x2014; 40 GB, best local model</option>
+              </optgroup>
+            </select>
+            <input class="finput" type="text" id="c-lmodel" placeholder="or type: phi4, qwen2.5:14b, llama3.2..." style="margin-top:6px"/>
+          </div>
+          <div class="model-rec">
+            <div class="rec-row"><span class="rec-label">&#x2B50; For best extraction quality:</span><span class="rec-val">phi4 or qwen2.5:14b (structured JSON, good reasoning)</span></div>
+            <div class="rec-row"><span class="rec-label">&#x26A1; For speed on a laptop:</span><span class="rec-val">llama3.2 or mistral (faster, lighter)</span></div>
+            <div class="rec-row"><span class="rec-label">&#x1F512; For regulated/sensitive data:</span><span class="rec-val">Any local model &#x2014; data stays on device</span></div>
+          </div>
+          <div class="frow-inline">
+            <button class="fbtn" id="btn-test-ollama" onclick="testOllama()">Test Connection</button>
+            <div class="stline"><div class="sdot" id="d-ollama"></div><span id="t-ollama">Not tested</span></div>
+          </div>
+          <div class="fhint" style="margin-top:10px">
+            Setup: &nbsp;<code style="color:var(--green)">brew install ollama</code> &nbsp;&#x2014;&nbsp;
+            <code style="color:var(--green)">ollama pull phi4</code> &nbsp;&#x2014;&nbsp;
+            <code style="color:var(--green)">OLLAMA_ORIGINS=* ollama serve</code>
+          </div>
+        </div>
+
+        <!-- Claude fields -->
+        <div id="f-claude" class="hidden">
+          <div class="frow">
+            <label class="flabel">API Key <span class="badge bwarn">Data leaves device</span></label>
+            <input class="finput" type="password" id="c-ckey" placeholder="sk-ant-api03-..."/>
+            <div class="fhint">Stored in browser only &#x2014; sent only to Anthropic API</div>
+          </div>
+          <div class="frow">
+            <label class="flabel">Model</label>
+            <select class="fselect" id="c-cmodel">
+              <option value="claude-sonnet-4-20250514">claude-sonnet-4 &#x2014; Best for CM document analysis (recommended)</option>
+              <option value="claude-haiku-4-5-20251001">claude-haiku-4 &#x2014; Fastest, cheapest, lighter extraction</option>
+              <option value="claude-opus-4-5">claude-opus-4 &#x2014; Most capable, complex document types</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- OpenAI fields -->
+        <div id="f-openai" class="hidden">
+          <div class="frow">
+            <label class="flabel">API Key <span class="badge bwarn">Data leaves device</span></label>
+            <input class="finput" type="password" id="c-okey" placeholder="sk-proj-..."/>
+            <div class="fhint">Stored in browser only &#x2014; sent only to OpenAI API</div>
+          </div>
+          <div class="frow">
+            <label class="flabel">Model</label>
+            <select class="fselect" id="c-omodel">
+              <option value="gpt-4o">gpt-4o &#x2014; Best for structured extraction (recommended)</option>
+              <option value="gpt-4o-mini">gpt-4o-mini &#x2014; Faster and cheaper, lighter extraction</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Organisation Details</div>
+        <div class="frow">
+          <label class="flabel">Client / Organisation Name</label>
+          <input class="finput" type="text" id="c-client" placeholder="e.g. Acme Aerospace, ACME GmbH..."/>
+          <div class="fhint">Embedded in the cm-kb.json metadata</div>
+        </div>
+        <div class="frow">
+          <label class="flabel">Knowledge Base Description (optional)</label>
+          <input class="finput" type="text" id="c-desc" placeholder="e.g. CM documents, ECOs, CCB minutes 2023-2025"/>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 2: LOAD FILES -->
+    <div class="panel" id="panel-2">
+      <div>
+        <div class="ph">Load Your Documents</div>
+        <div class="ps">Drop your CM documents — ECOs, CCB minutes, policies, runbooks, standards, risk registers. The more context you provide, the richer the knowledge base.</div>
+      </div>
+
+      <div class="card">
+        <div class="dropzone" id="dropzone">
+          <input type="file" id="fileInput" accept=".txt,.md,.pdf,.csv,.json,.xml,.html,.htm,.docx" multiple style="display:none"/>
+          <input type="file" id="folderInput" webkitdirectory multiple style="display:none"/>
+          <div class="dz-icon">&#x1F4C1;</div>
+          <div class="dz-title">Drop files or folder here</div>
+          <div class="dz-btns">
+            <button class="dzbtn" id="btn-pickfiles">&#x1F4C4; Select files</button>
+            <button class="dzbtn" id="btn-pickfolder">&#x1F4C1; Select folder</button>
+          </div>
+          <div class="dz-sub">Supports: .txt .md .pdf .csv .json .xml .html .docx</div>
+          <div class="dz-sub" style="margin-top:4px;color:var(--tx4)">Folders are traversed recursively</div>
+        </div>
+      </div>
+
+      <div class="card hidden" id="queue-card">
+        <div class="queue-wrap">
+          <div class="queue-head">
+            <span class="queue-head-title" id="queue-title">0 files queued</span>
+            <div style="display:flex;gap:8px;align-items:center">
+              <span style="font-family:var(--mono);font-size:10px;color:var(--tx4)" id="queue-skipped"></span>
+              <button class="fbtn-ghost" onclick="clearQueue()">Clear</button>
+            </div>
+          </div>
+          <div class="queue-list" id="queue-list"></div>
+        </div>
+        <div style="margin-top:10px;font-family:var(--mono);font-size:10px;color:var(--tx3)" id="queue-hint"></div>
+      </div>
+    </div>
+
+    <!-- STEP 3: PROCESS -->
+    <div class="panel" id="panel-3">
+      <div>
+        <div class="ph">Extract &amp; Enrich</div>
+        <div class="ps">The LLM reads each document and extracts: document type, key decisions, who decided, alternatives rejected, risks accepted, and relevant tags. This creates structured decision provenance.</div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Processing Options</div>
+        <div class="frow" style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+          <input type="checkbox" id="opt-decisions" checked style="accent-color:var(--cyan);width:16px;height:16px"/>
+          <div>
+            <div style="font-size:13px;font-weight:500">Extract decision provenance <span class="badge bgreen">Recommended</span></div>
+            <div class="fhint">Uses LLM to extract who decided, why, alternatives rejected, risks accepted</div>
+          </div>
+        </div>
+        <div class="frow" style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+          <input type="checkbox" id="opt-tags" checked style="accent-color:var(--cyan);width:16px;height:16px"/>
+          <div>
+            <div style="font-size:13px;font-weight:500">Auto-generate tags</div>
+            <div class="fhint">LLM suggests relevant CM tags (ECO, CCB, baseline, audit...)</div>
+          </div>
+        </div>
+        <div class="frow" style="display:flex;align-items:center;gap:12px">
+          <input type="checkbox" id="opt-doctype" checked style="accent-color:var(--cyan);width:16px;height:16px"/>
+          <div>
+            <div style="font-size:13px;font-weight:500">Classify document type</div>
+            <div class="fhint">Identifies: ECO, CCB minutes, policy, standard, runbook, audit report...</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" id="proc-ready-card">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <div style="font-size:13px;font-weight:600;margin-bottom:3px">Ready to process <span id="proc-count" style="color:var(--cyan)">0</span> documents</div>
+            <div style="font-size:12px;color:var(--tx3)">Each document requires 1 LLM call. Estimated time: <span id="proc-est" style="color:var(--tx2)">—</span></div>
+          </div>
+          <button class="fbtn" id="btn-process" onclick="startProcessing()">Start Processing &#x25BA;</button>
+        </div>
+      </div>
+
+      <div class="prog-wrap hidden" id="prog-card">
+        <div class="prog-label" id="prog-label">Initialising...</div>
+        <div class="prog-bar-bg"><div class="prog-bar" id="prog-bar"></div></div>
+        <div class="prog-stats">
+          <span>&#x1F4CB; <span id="ps-total">0</span> total</span>
+          <span class="prog-stat-ok">&#x2713; <span id="ps-ok">0</span> done</span>
+          <span class="prog-stat-err">&#x2717; <span id="ps-err">0</span> errors</span>
+          <span class="prog-stat-skip">&#x2014; <span id="ps-skip">0</span> skipped</span>
+        </div>
+      </div>
+
+      <div class="card hidden" id="results-card">
+        <div class="card-title" style="justify-content:space-between">
+          <span>Processed Documents</span>
+          <div style="display:flex;gap:8px">
+            <button class="fbtn-ghost" onclick="openEditModal(-1)">&#x270F; Edit all tags</button>
+          </div>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="results-table" id="results-table">
+            <thead><tr><th>#</th><th>Title</th><th>Type</th><th>Tags</th><th>Decision</th><th>Edit</th></tr></thead>
+            <tbody id="results-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 4: EXPORT -->
+    <div class="panel" id="panel-4">
+      <div>
+        <div class="ph">Export Knowledge Base</div>
+        <div class="ps">Download your cm-kb.json file. Place it alongside cm-guide.html — it loads automatically when served over HTTP, or drag it into the Settings panel.</div>
+      </div>
+
+      <div class="export-card" id="export-card">
+        <div class="export-icon">&#x1F4BE;</div>
+        <div class="export-title">Knowledge Base Ready</div>
+        <div class="export-sub">Your organisation's CM context, enriched with decision provenance and structured metadata, ready to load into CM Guide.</div>
+        <div class="export-stats">
+          <div class="estat"><div class="estat-num" id="ex-docs">0</div><div class="estat-label">Documents</div></div>
+          <div class="estat"><div class="estat-num" id="ex-decisions">0</div><div class="estat-label">With decisions</div></div>
+          <div class="estat"><div class="estat-num" id="ex-tags">0</div><div class="estat-label">Unique tags</div></div>
+        </div>
+        <div style="display:flex;gap:10px;justify-content:center">
+          <button class="fbtn" style="font-size:14px;padding:11px 28px" onclick="exportKB()">&#x2B07; Download cm-kb.json</button>
+          <button class="fbtn-ghost" onclick="previewKB()">Preview JSON</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">How to use</div>
+        <div style="font-size:13px;color:var(--tx2);line-height:1.9">
+          <div>&#x2460; Place <code style="color:var(--cyan)">cm-kb.json</code> in the same folder as <code style="color:var(--cyan)">cm-guide.html</code></div>
+          <div>&#x2461; Serve with: <code style="color:var(--green)">python3 -m http.server 8000</code> &#x2192; auto-loads on startup</div>
+          <div>&#x2462; Or open cm-guide.html &#x2192; Settings &#x2192; drag cm-kb.json into the Sidecar panel</div>
+          <div>&#x2463; The knowledge base merges with built-in CM standards automatically</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BOTTOM NAV -->
+    <div class="bottom-nav">
+      <button class="fbtn-ghost" id="btn-back" onclick="prevStep()" style="display:none">&#x2190; Back</button>
+      <span class="nav-info" id="nav-info"></span>
+      <button class="fbtn" id="btn-next" onclick="nextStep()">Continue &#x2192;</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT MODAL -->
+<div class="moverlay" id="editModal">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="mtitle">Edit Document</div>
+    <div class="frow"><label class="flabel">Title</label><input class="finput" type="text" id="edit-title"/></div>
+    <div class="frow"><label class="flabel">Type</label>
+      <select class="fselect" id="edit-type">
+        <option value="policy">Policy</option><option value="standard">Standard</option>
+        <option value="change_record">Change Record (ECO/ECR)</option>
+        <option value="meeting_minutes">Meeting Minutes (CCB)</option>
+        <option value="audit_report">Audit Report</option>
+        <option value="runbook">Runbook / Procedure</option>
+        <option value="risk_register">Risk Register</option>
+        <option value="specification">Specification</option>
+        <option value="other">Other</option>
+      </select>
+    </div>
+    <div class="frow"><label class="flabel">Tags (comma separated)</label><input class="finput" type="text" id="edit-tags"/></div>
+    <div class="frow"><label class="flabel">Decision Outcome</label>
+      <select class="fselect" id="edit-dec-outcome">
+        <option value="">None / Not applicable</option>
+        <option value="Approved">Approved</option><option value="Rejected">Rejected</option>
+        <option value="Deferred">Deferred</option><option value="Approved with conditions">Approved with conditions</option>
+      </select>
+    </div>
+    <div class="frow"><label class="flabel">Decision Drivers (one per line)</label><textarea class="finput" id="edit-dec-drivers" rows="3" style="resize:vertical"></textarea></div>
+    <div class="frow"><label class="flabel">Alternatives Rejected (one per line)</label><textarea class="finput" id="edit-dec-alts" rows="3" style="resize:vertical"></textarea></div>
+    <div class="frow"><label class="flabel">Risk Accepted</label><input class="finput" type="text" id="edit-dec-risk"/></div>
+    <div class="frow"><label class="flabel">Approved By (comma separated)</label><input class="finput" type="text" id="edit-dec-by"/></div>
+    <div class="mactions">
+      <button class="fbtn-ghost" onclick="closeEdit()">Cancel</button>
+      <button class="fbtn" onclick="saveEdit()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- JSON PREVIEW MODAL -->
+<div class="moverlay" id="previewModal">
+  <div class="modal" style="width:700px;max-height:80vh" onclick="event.stopPropagation()">
+    <div class="mtitle">cm-kb.json Preview</div>
+    <pre id="preview-content" style="font-family:var(--mono);font-size:11px;color:var(--green);background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:14px;overflow:auto;max-height:50vh;white-space:pre-wrap"></pre>
+    <div class="mactions"><button class="fbtn-ghost" onclick="document.getElementById('previewModal').classList.remove('open')">Close</button><button class="fbtn" onclick="exportKB()">Download</button></div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════
+let currentStep=1;
+let provider='';
+let fileQueue=[];   // [{file, status:'wait'|'busy'|'ok'|'err'|'skip', text:'', error:''}]
+let processed=[];   // [{id, title, type, tags, content, decision, date}]
+let editIdx=-1;
+
+const SUPPORTED=['.txt','.md','.pdf','.csv','.json','.xml','.html','.htm','.docx'];
+
+// ═══════════════════════════════════════════════════════
+// STEP NAVIGATION
+// ═══════════════════════════════════════════════════════
+function goStep(n){
+  if(n===currentStep)return;
+  if(n>currentStep){
+    // Validate before advancing
+    if(currentStep===1&&!validateStep1())return;
+    if(currentStep===2&&fileQueue.filter(f=>f.status==='wait').length===0){toast('Add files first','er');return}
+    if(currentStep===3&&processed.length===0){toast('Process documents first','er');return}
+  }
+  currentStep=n;
+  renderStep();
+}
+function nextStep(){goStep(currentStep+1)}
+function prevStep(){goStep(currentStep-1)}
+
+function renderStep(){
+  document.getElementById('step-label').textContent=currentStep;
+  [1,2,3,4].forEach(i=>{
+    const nav=document.getElementById('nav-'+i);
+    const sn=document.getElementById('sn-'+i);
+    nav.classList.toggle('active',i===currentStep);
+    nav.classList.toggle('done',i<currentStep);
+    if(i<currentStep) sn.textContent='✓';
+    else sn.textContent=i;
+    document.getElementById('panel-'+i).classList.toggle('active',i===currentStep);
+  });
+  const back=document.getElementById('btn-back');
+  const next=document.getElementById('btn-next');
+  back.style.display=currentStep>1?'':'none';
+  if(currentStep===4){next.style.display='none'}
+  else{next.style.display='';next.textContent=currentStep===3?'Review & Export →':'Continue →'}
+  // Update nav info
+  const info=document.getElementById('nav-info');
+  const msgs={1:'Configure your LLM provider',2:`${fileQueue.length} file(s) queued`,3:`${processed.length} documents processed`,4:'Ready to export'};
+  info.textContent=msgs[currentStep]||'';
+  // Update proc count
+  if(currentStep===3){
+    const n=fileQueue.filter(f=>f.status==='wait'||f.status==='ok').length;
+    document.getElementById('proc-count').textContent=n;
+    const secs=n*(provider==='claude'||provider==='openai'?3:8);
+    document.getElementById('proc-est').textContent=secs<60?`~${secs}s`:`~${Math.ceil(secs/60)}min`;
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// STEP 1 — LLM CONFIG
+// ═══════════════════════════════════════════════════════
+function selProv(p){
+  provider=p;
+  document.querySelectorAll('.pcard').forEach(c=>c.classList.remove('sel'));
+  document.getElementById('pc-'+p).classList.add('sel');
+  ['ollama','claude','openai'].forEach(x=>document.getElementById('f-'+x).classList.toggle('hidden',x!==p));
+}
+
+function validateStep1(){
+  if(!provider){toast('Select a provider first','er');return false}
+  if(provider==='claude'&&!document.getElementById('c-ckey').value.trim()){toast('Enter Claude API key','er');return false}
+  if(provider==='openai'&&!document.getElementById('c-okey').value.trim()){toast('Enter OpenAI API key','er');return false}
+  if(provider==='ollama'&&!document.getElementById('c-lmodel').value.trim()){toast('Enter Ollama model name','er');return false}
+  return true;
+}
+
+function getLLMConfig(){
+  if(provider==='claude') return {provider:'claude',key:document.getElementById('c-ckey').value.trim(),model:document.getElementById('c-cmodel').value};
+  if(provider==='openai') return {provider:'openai',key:document.getElementById('c-okey').value.trim(),model:document.getElementById('c-omodel').value};
+  if(provider==='ollama') return {provider:'ollama',url:document.getElementById('c-lurl').value.trim()||'http://localhost:11434',model:document.getElementById('c-lmodel').value.trim()};
+}
+
+async function testOllama(){
+  const url=(document.getElementById('c-lurl').value.trim()||'http://localhost:11434').replace(/\/$/,'');
+  const btn=document.getElementById('btn-test-ollama');
+  btn.disabled=true;btn.textContent='Testing...';
+  setSt('ollama','','Connecting...');
+  try{
+    const r=await fetch(`${url}/api/tags`);
+    if(!r.ok)throw new Error(`HTTP ${r.status}`);
+    const d=await r.json();
+    const models=(d.models||[]).map(m=>m.name).join(', ')||'none pulled yet';
+    setSt('ollama','ok',`Connected — available: ${models}`);
+    toast('Ollama connected ✓');
+  }catch(err){
+    setSt('ollama','er',`Cannot reach Ollama: ${err.message}`);
+    toast('Cannot connect to Ollama','er');
+  }
+  btn.disabled=false;btn.textContent='Test Connection';
+}
+
+function setSt(p,state,text){
+  const d=document.getElementById('d-'+p);const t=document.getElementById('t-'+p);
+  if(d)d.className='sdot'+(state?' '+state:'');
+  if(t)t.textContent=text;
+}
+
+// ═══════════════════════════════════════════════════════
+// STEP 2 — FILE LOADING
+// ═══════════════════════════════════════════════════════
+function isSupported(name){return SUPPORTED.includes(name.toLowerCase().substring(name.lastIndexOf('.')))}
+function fmtSize(b){if(b<1024)return b+'B';if(b<1048576)return (b/1024).toFixed(0)+'KB';return (b/1048576).toFixed(1)+'MB'}
+function fileIcon(name){const ext=name.toLowerCase().substring(name.lastIndexOf('.'));return{'.pdf':'📕','.docx':'📘','.md':'📝','.txt':'📄','.csv':'📊','.json':'📋','.xml':'📋','.html':'🌐','.htm':'🌐'}[ext]||'📄'}
+
+function loadFiles(files){
+  const arr=Array.from(files);
+  const supported=arr.filter(f=>isSupported(f.name));
+  const skipped=arr.length-supported.length;
+  supported.forEach(f=>fileQueue.push({file:f,status:'wait',text:'',error:''}));
+  renderQueue();
+  const sk=document.getElementById('queue-skipped');
+  sk.textContent=skipped>0?`${skipped} unsupported skipped`:'';
+  renderStep();
+}
+
+function renderQueue(){
+  const card=document.getElementById('queue-card');
+  const list=document.getElementById('queue-list');
+  if(fileQueue.length===0){card.classList.add('hidden');return}
+  card.classList.remove('hidden');
+  document.getElementById('queue-title').textContent=`${fileQueue.length} file${fileQueue.length!==1?'s':''} queued`;
+  const statusMap={wait:'<span class="s-wait">pending</span>',busy:'<span class="s-busy">reading…</span>',ok:'<span class="s-ok">✓ ready</span>',err:'<span class="s-err">✗ error</span>',skip:'<span class="s-skip">skipped</span>'};
+  list.innerHTML=fileQueue.map((item,i)=>`
+    <div class="qi">
+      <span>${fileIcon(item.file.name)}</span>
+      <span class="qi-name" title="${item.file.name}">${item.file.name}</span>
+      <span class="qi-size">${fmtSize(item.file.size)}</span>
+      <span class="qi-status">${statusMap[item.status]||''}</span>
+    </div>`).join('');
+  const hint=document.getElementById('queue-hint');
+  hint.textContent=`${fileQueue.filter(f=>f.status==='wait').length} pending, ${fileQueue.filter(f=>f.status==='ok').length} read`;
+}
+
+function clearQueue(){fileQueue=[];renderQueue();renderStep()}
+
+// ═══════════════════════════════════════════════════════
+// FILE TEXT EXTRACTION (same as cm-guide)
+// ═══════════════════════════════════════════════════════
+async function extractText(file){
+  const name=file.name.toLowerCase();
+  if(name.endsWith('.pdf')){
+    if(!window.pdfjsLib){
+      await new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';s.onload=()=>{pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';res()};s.onerror=rej;document.head.appendChild(s)});
+    }
+    const ab=await file.arrayBuffer();
+    const pdf=await pdfjsLib.getDocument({data:ab}).promise;
+    let text='';
+    for(let i=1;i<=Math.min(pdf.numPages,60);i++){const page=await pdf.getPage(i);const tc=await page.getTextContent();text+=tc.items.map(x=>x.str).join(' ')+'\n'}
+    return text.trim();
+  }
+  if(name.endsWith('.docx')){
+    if(!window.mammoth){await new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js';s.onload=res;s.onerror=rej;document.head.appendChild(s)})}
+    const ab=await file.arrayBuffer();const result=await mammoth.extractRawText({arrayBuffer:ab});return result.value.trim();
+  }
+  return await file.text();
+}
+
+// ═══════════════════════════════════════════════════════
+// STEP 3 — LLM EXTRACTION
+// ═══════════════════════════════════════════════════════
+async function callLLM(prompt){
+  const lc=getLLMConfig();
+  if(lc.provider==='claude'){
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':lc.key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:lc.model,max_tokens:800,messages:[{role:'user',content:prompt}]})});
+    if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'Claude error')}
+    const d=await r.json();return d.content.map(b=>b.text||'').join('');
+  }
+  if(lc.provider==='openai'){
+    const r=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${lc.key}`},body:JSON.stringify({model:lc.model,max_tokens:800,messages:[{role:'user',content:prompt}]})});
+    if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'OpenAI error')}
+    const d=await r.json();return d.choices[0].message.content;
+  }
+  if(lc.provider==='ollama'){
+    const base=lc.url.replace(/\/$/,'');
+    const r=await fetch(`${base}/api/chat`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:lc.model,stream:false,messages:[{role:'user',content:prompt}]})});
+    if(!r.ok)throw new Error(`Ollama ${r.status}`);
+    const d=await r.json();return d.message?.content||'';
+  }
+}
+
+function buildExtractionPrompt(filename, text, opts){
+  const excerpt=text.slice(0,3000);
+  return `You are a Configuration Management (CM) document analyst. Analyze this CM document and extract structured metadata.
+
+Document filename: ${filename}
+Document content (excerpt):
+---
+${excerpt}
+---
+
+Return ONLY a valid JSON object with exactly these fields (no markdown, no explanation):
+{
+  "title": "clear descriptive title for this document",
+  "type": "${opts.doctype?'one of: policy, standard, change_record, meeting_minutes, audit_report, runbook, risk_register, specification, other':'other'}",
+  "date": "ISO date if found, else null",
+  "tags": ${opts.tags?'["array","of","relevant","cm","tags","max 8"]':'[]'},
+  "decision": ${opts.decisions?`{
+    "outcome": "Approved/Rejected/Deferred/null if not a decision document",
+    "drivers": ["list of decision drivers or empty array"],
+    "alternatives_rejected": ["alternatives considered and rejected or empty array"],
+    "risk_accepted": "description of risk accepted or null",
+    "approved_by": ["names of approvers or empty array"],
+    "date": "decision date or null"
+  }`:'null'}
+}`;
+}
+
+async function startProcessing(){
+  if(!validateStep1())return;
+  // First read all files
+  const waiting=fileQueue.filter(f=>f.status==='wait');
+  if(waiting.length===0){toast('No files to process','er');return}
+  document.getElementById('btn-process').disabled=true;
+  document.getElementById('prog-card').classList.remove('hidden');
+  processed=[];
+  let ok=0,errs=0,skip=0;
+  const total=fileQueue.length;
+  const opts={decisions:document.getElementById('opt-decisions').checked,tags:document.getElementById('opt-tags').checked,doctype:document.getElementById('opt-doctype').checked};
+
+  for(let i=0;i<fileQueue.length;i++){
+    const item=fileQueue[i];
+    if(item.status==='skip'){skip++;continue}
+    fileQueue[i].status='busy';
+    renderQueue();
+    setProgress(i,total,`Reading ${item.file.name}...`,'','','');
+
+    try{
+      // Extract text
+      let text=await extractText(item.file);
+      text=text.replace(/\n{3,}/g,'\n\n').replace(/[ \t]{2,}/g,' ').trim();
+      if(text.length<30)throw new Error('No readable text');
+      if(text.length>8000)text=text.slice(0,8000)+'\n\n[truncated]';
+
+      setProgress(i,total,`Analysing ${item.file.name}...`,ok,errs,skip);
+
+      // LLM extraction
+      let meta={title:item.file.name.replace(/\.[^.]+$/,'').replace(/[-_]/g,' '),type:'other',date:null,tags:[],decision:null};
+      try{
+        const prompt=buildExtractionPrompt(item.file.name,text,opts);
+        const raw=await callLLM(prompt);
+        const clean=raw.replace(/```json|```/g,'').trim();
+        const parsed=JSON.parse(clean);
+        meta={...meta,...parsed};
+      }catch(llmErr){
+        console.warn('LLM extraction failed for',item.file.name,llmErr.message);
+        // Use filename as title, no enrichment
+      }
+
+      processed.push({id:'doc-'+Date.now()+'-'+i,title:meta.title||item.file.name,type:meta.type||'other',date:meta.date||null,tags:Array.isArray(meta.tags)?meta.tags:[],content:text,decision:meta.decision&&meta.decision.outcome?meta.decision:null,source:item.file.name});
+      fileQueue[i].status='ok';
+      ok++;
+    }catch(err){
+      fileQueue[i].status='err';fileQueue[i].error=err.message;
+      errs++;
+    }
+    setProgress(i+1,total,`${ok} done, ${errs} errors, ${total-ok-errs} remaining`,ok,errs,skip);
+    renderQueue();
+    await new Promise(r=>setTimeout(r,50));
+  }
+
+  setProgress(total,total,'Processing complete',ok,errs,skip);
+  document.getElementById('btn-process').disabled=false;
+  renderResults();
+  document.getElementById('results-card').classList.remove('hidden');
+  if(ok>0)toast(`${ok} documents processed`);
+  if(errs>0)toast(`${errs} errors — check console`,'er');
+}
+
+function setProgress(done,total,label,ok,errs,skip){
+  document.getElementById('prog-bar').style.width=(total>0?Math.round(done/total*100):0)+'%';
+  document.getElementById('prog-label').textContent=label;
+  document.getElementById('ps-total').textContent=total;
+  document.getElementById('ps-ok').textContent=ok||0;
+  document.getElementById('ps-err').textContent=errs||0;
+  document.getElementById('ps-skip').textContent=skip||0;
+}
+
+function renderResults(){
+  const tbody=document.getElementById('results-tbody');
+  tbody.innerHTML=processed.map((doc,i)=>`
+    <tr>
+      <td style="color:var(--tx4);font-family:var(--mono)">${i+1}</td>
+      <td class="doc-title" title="${doc.title}">${doc.title}</td>
+      <td class="doc-type">${doc.type}</td>
+      <td>${doc.tags.slice(0,4).map(t=>`<span class="tag-chip">${t}</span>`).join('')}</td>
+      <td>${doc.decision?`<span class="dec-badge">✓ ${doc.decision.outcome||'recorded'}</span>`:'<span class="no-dec">—</span>'}</td>
+      <td><button class="edit-btn" onclick="openEditModal(${i})">✏</button></td>
+    </tr>`).join('');
+}
+
+// ═══════════════════════════════════════════════════════
+// EDIT MODAL
+// ═══════════════════════════════════════════════════════
+function openEditModal(i){
+  editIdx=i;
+  if(i<0||i>=processed.length)return;
+  const doc=processed[i];
+  document.getElementById('edit-title').value=doc.title;
+  document.getElementById('edit-type').value=doc.type||'other';
+  document.getElementById('edit-tags').value=(doc.tags||[]).join(', ');
+  const dec=doc.decision||{};
+  document.getElementById('edit-dec-outcome').value=dec.outcome||'';
+  document.getElementById('edit-dec-drivers').value=(dec.drivers||[]).join('\n');
+  document.getElementById('edit-dec-alts').value=(dec.alternatives_rejected||[]).join('\n');
+  document.getElementById('edit-dec-risk').value=dec.risk_accepted||'';
+  document.getElementById('edit-dec-by').value=(dec.approved_by||[]).join(', ');
+  document.getElementById('editModal').classList.add('open');
+}
+function closeEdit(){document.getElementById('editModal').classList.remove('open')}
+function saveEdit(){
+  if(editIdx<0||editIdx>=processed.length)return;
+  const outcome=document.getElementById('edit-dec-outcome').value;
+  processed[editIdx]={
+    ...processed[editIdx],
+    title:document.getElementById('edit-title').value.trim(),
+    type:document.getElementById('edit-type').value,
+    tags:document.getElementById('edit-tags').value.split(',').map(t=>t.trim()).filter(Boolean),
+    decision:outcome?{
+      outcome,
+      drivers:document.getElementById('edit-dec-drivers').value.split('\n').map(t=>t.trim()).filter(Boolean),
+      alternatives_rejected:document.getElementById('edit-dec-alts').value.split('\n').map(t=>t.trim()).filter(Boolean),
+      risk_accepted:document.getElementById('edit-dec-risk').value.trim()||null,
+      approved_by:document.getElementById('edit-dec-by').value.split(',').map(t=>t.trim()).filter(Boolean)
+    }:null
+  };
+  renderResults();
+  closeEdit();
+  toast('Document updated');
+}
+
+// ═══════════════════════════════════════════════════════
+// STEP 4 — EXPORT
+// ═══════════════════════════════════════════════════════
+function buildKB(){
+  const allTags=[...new Set(processed.flatMap(d=>d.tags))];
+  return {
+    meta:{
+      client:document.getElementById('c-client').value.trim()||'Organisation',
+      description:document.getElementById('c-desc').value.trim()||'CM Knowledge Base',
+      created:new Date().toISOString().slice(0,10),
+      version:'1.0',
+      tool:'CM Contextualizer',
+      provider:provider,
+      stats:{documents:processed.length,with_decisions:processed.filter(d=>d.decision).length,tags:allTags.length}
+    },
+    documents:processed
+  };
+}
+
+function updateExportStats(){
+  const kb=buildKB();
+  document.getElementById('ex-docs').textContent=kb.meta.stats.documents;
+  document.getElementById('ex-decisions').textContent=kb.meta.stats.with_decisions;
+  document.getElementById('ex-tags').textContent=kb.meta.stats.tags;
+}
+
+function exportKB(){
+  const kb=buildKB();
+  const json=JSON.stringify(kb,null,2);
+  const blob=new Blob([json],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;
+  a.download=`cm-kb-${(document.getElementById('c-client').value.trim()||'org').replace(/\s+/g,'-').toLowerCase()}.json`;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('cm-kb.json downloaded ✓');
+}
+
+function previewKB(){
+  const kb=buildKB();
+  const preview={meta:kb.meta,documents:kb.documents.slice(0,2).map(d=>({...d,content:d.content.slice(0,200)+'...[truncated]'}))};
+  document.getElementById('preview-content').textContent=JSON.stringify(preview,null,2);
+  document.getElementById('previewModal').classList.add('open');
+}
+
+// ═══════════════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════════════
+function toast(msg,type=''){const el=document.createElement('div');el.className='toast'+(type?' '+type:'');el.textContent=msg;document.body.appendChild(el);setTimeout(()=>el.remove(),2500)}
+
+// ═══════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded',function(){
+  renderStep();
+
+  // File inputs
+  document.getElementById('btn-pickfiles').addEventListener('click',e=>{e.stopPropagation();document.getElementById('fileInput').click()});
+  document.getElementById('btn-pickfolder').addEventListener('click',e=>{e.stopPropagation();document.getElementById('folderInput').click()});
+  document.getElementById('fileInput').addEventListener('change',function(){if(this.files.length)loadFiles(this.files)});
+  document.getElementById('folderInput').addEventListener('change',function(){if(this.files.length)loadFiles(this.files)});
+
+  // Drag and drop with folder traversal
+  const dz=document.getElementById('dropzone');
+  dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag')});
+  dz.addEventListener('dragleave',e=>{if(!dz.contains(e.relatedTarget))dz.classList.remove('drag')});
+  dz.addEventListener('drop',e=>{
+    e.preventDefault();dz.classList.remove('drag');
+    const items=e.dataTransfer.items;
+    if(items&&items.length){
+      const filePromises=[];
+      function traverse(entry){
+        if(entry.isFile){filePromises.push(new Promise(res=>entry.file(res)))}
+        else if(entry.isDirectory){const reader=entry.createReader();function read(){reader.readEntries(entries=>{if(!entries.length)return;entries.forEach(traverse);read()})};read()}
+      }
+      Array.from(items).forEach(item=>{const en=item.webkitGetAsEntry();if(en)traverse(en)});
+      setTimeout(()=>Promise.all(filePromises).then(files=>loadFiles(files)),200);
+    }else if(e.dataTransfer.files.length){loadFiles(e.dataTransfer.files)}
+  });
+
+  // Model selector sync
+  const lsel=document.getElementById('c-lmodel-sel');
+  if(lsel)lsel.addEventListener('change',function(){if(this.value)document.getElementById('c-lmodel').value=this.value});
+
+  // Close modals on overlay click
+  document.getElementById('editModal').addEventListener('click',function(e){if(e.target===this)closeEdit()});
+  document.getElementById('previewModal').addEventListener('click',function(e){if(e.target===this)this.classList.remove('open')});
+
+  // Update export stats when reaching step 4
+  const origRender=renderStep;
+  window.renderStep=function(){origRender();if(currentStep===4)updateExportStats()};
+});
+</script>
+</body>
+</html>
